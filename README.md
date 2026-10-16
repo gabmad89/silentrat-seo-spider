@@ -43,7 +43,7 @@ Requires **Python 3.9+** with Tkinter (included in the python.org installers).
 **Windows (PowerShell):**
 
 ```
-git clone https://github.com/gmortega89-crypto/silentrat-seo-spider.git
+git clone https://github.com/gabmad89/silentrat-seo-spider.git
 cd silentrat-seo-spider
 python -m venv .venv
 .venv\Scripts\activate
@@ -54,7 +54,7 @@ python silentrat.py          # or double-click SilentRat.bat
 **macOS / Linux (Terminal):**
 
 ```
-git clone https://github.com/gmortega89-crypto/silentrat-seo-spider.git
+git clone https://github.com/gabmad89/silentrat-seo-spider.git
 cd silentrat-seo-spider
 python3 -m venv .venv
 source .venv/bin/activate
