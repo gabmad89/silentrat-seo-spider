@@ -3,29 +3,71 @@
 A **fully standalone desktop SEO crawler with no URL limit**, inspired by Screaming Frog,
 with its own branding and code. It ships with a full GUI, **JavaScript rendering**,
 **custom extraction**, **structured data**, **locally measured Core Web Vitals**,
-**Spider/List/Sitemap modes**, and **Excel export**. It can also be packaged as a single
-Windows `.exe` that doesn't require Python.
+**Spider/List/Sitemap modes**, and **Excel export**. Runs on **Windows and macOS**, either
+as a ready-to-use app (no Python needed) or straight from Python.
 
 ---
 
-## 1. Run from Python
+## 1. Download the app (no Python needed)
+
+Get the latest version from the [**Releases**](../../releases/latest) page:
+
+| Platform | File |
+|---|---|
+| Windows 10/11 | `SilentRat-Windows.zip` (contains `SilentRat.exe`) |
+| macOS, Apple Silicon (M1/M2/M3/M4) | `SilentRat-macOS-AppleSilicon.zip` |
+| macOS, Intel | `SilentRat-macOS-Intel.zip` |
+
+**Windows:** unzip and double-click `SilentRat.exe`. It's a single self-contained file
+(~95 MB, bundling the JS rendering engine and Excel export).
+
+> Because it's a PyInstaller-packaged `.exe` that isn't code-signed, SmartScreen or some
+> antivirus tools may flag it as "unknown" the first time (a typical false positive).
+> Click **More info → Run anyway**, or add an exception.
+
+**macOS:** unzip and drag `SilentRat.app` into **Applications**. The app isn't signed by
+Apple, so the first time you open it, **right-click the app → Open → Open**. If macOS
+says the app "is damaged and can't be opened", run this once in Terminal:
 
 ```
+xattr -dr com.apple.quarantine /Applications/SilentRat.app
+```
+
+> **JS rendering and Web Vitals** require **Google Chrome** (or Microsoft Edge) to be
+> installed. They run in headless mode.
+
+## 2. Run from Python (Windows, macOS, Linux)
+
+Requires **Python 3.9+** with Tkinter (included in the python.org installers).
+
+**Windows (PowerShell):**
+
+```
+git clone https://github.com/gmortega89-crypto/silentrat-seo-spider.git
+cd silentrat-seo-spider
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 python silentrat.py          # or double-click SilentRat.bat
 ```
 
-## 2. Standalone executable (Windows)
+**macOS / Linux (Terminal):**
 
-Download `SilentRat.exe` from the [Releases](../../releases) page, or build it yourself
-(see [Building the `.exe`](#building-the-exe)). Double-click to run. **No Python needed**:
-a single self-contained file (~95 MB, bundling the JS rendering engine and Excel export)
-that runs on any Windows 10/11 machine.
+```
+git clone https://github.com/gmortega89-crypto/silentrat-seo-spider.git
+cd silentrat-seo-spider
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python silentrat.py
+```
 
-> **Antivirus:** because it's a PyInstaller-packaged `.exe`, some antivirus tools may flag
-> it as "unknown" the first time (a typical false positive). Add an exception if needed.
->
-> **JS rendering:** requires **Chrome or Edge** to be installed (used in headless mode).
+> **macOS:** if you get `ModuleNotFoundError: No module named '_tkinter'` (common with
+> Homebrew Python), install Tk with `brew install python-tk`, or use the python.org installer.
+> **Linux:** install Tk with your package manager, e.g. `sudo apt install python3-tk`.
+
+No Git? Click **Code → Download ZIP** on the repository page, unzip it, and run the same
+commands from inside the folder (skip the `git clone` line).
 
 ## 3. Command line (advanced)
 
@@ -111,21 +153,47 @@ seo-spider/
 ├── make_icon.py         ← icon generator
 ├── silentrat.ico        ← icon
 ├── SilentRat.bat        ← launcher for the Python version
-├── SilentRat.spec       ← PyInstaller build spec
+├── SilentRat.spec       ← PyInstaller build spec (Windows)
+├── .github/workflows/
+│   └── release.yml      ← builds Windows + macOS apps and publishes Releases
 ├── requirements.txt
 └── README.md
 ```
 
-## Building the `.exe`
+## Building the apps yourself
+
+Install the build tools first: `pip install pyinstaller pillow`
+
+**Windows (`.exe`):**
 
 ```
-pip install pyinstaller
-python -m PyInstaller --onefile --windowed --name SilentRat --icon silentrat.ico ^
-  --add-data "silentrat.ico;." --collect-all selenium --collect-submodules openpyxl ^
-  --hidden-import lxml._elementpath silentrat.py
+python -m PyInstaller --noconfirm SilentRat.spec
 ```
 
 The executable is written to `dist\SilentRat.exe`.
+
+**macOS (`.app`):**
+
+```
+python -m PyInstaller --noconfirm --windowed --name SilentRat \
+  --icon silentrat.ico --add-data "silentrat.ico:." \
+  --collect-all selenium --collect-submodules openpyxl \
+  --hidden-import lxml._elementpath silentrat.py
+```
+
+The app is written to `dist/SilentRat.app`. PyInstaller can't cross-compile, so each
+platform's app must be built on that platform.
+
+### Automated releases
+
+The [`release.yml`](.github/workflows/release.yml) workflow builds the Windows `.exe` and
+both macOS apps (Apple Silicon and Intel) on GitHub's runners, then attaches them to a
+Release. To publish a new version:
+
+```
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Responsible use
 Only crawl sites **you own** or have permission to crawl. Use a delay and fewer threads

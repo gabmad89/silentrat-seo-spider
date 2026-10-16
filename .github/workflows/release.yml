@@ -1,0 +1,100 @@
+name: Build and release
+
+# Builds the Windows .exe and the macOS apps, then attaches them to a GitHub Release.
+# Trigger: push a tag like v1.0.0, or run it manually from the Actions tab.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: SilentRat-Windows.zip
+          - os: macos-latest      # Apple Silicon (M1/M2/M3/M4)
+            asset: SilentRat-macOS-AppleSilicon.zip
+          - os: macos-15-intel    # Intel
+            asset: SilentRat-macOS-Intel.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller pillow
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm SilentRat.spec
+          Compress-Archive -Path dist\SilentRat.exe -DestinationPath ${{ matrix.asset }}
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          python -m PyInstaller --noconfirm --windowed --name SilentRat \
+            --icon silentrat.ico --add-data "silentrat.ico:." \
+            --collect-all selenium --collect-submodules openpyxl \
+            --hidden-import lxml._elementpath silentrat.py
+          ditto -c -k --keepParent dist/SilentRat.app ${{ matrix.asset }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: assets/*.zip
+          body: |
+            ## Downloads
+
+            | Platform | File |
+            |---|---|
+            | Windows 10/11 | `SilentRat-Windows.zip` (contains `SilentRat.exe`) |
+            | macOS, Apple Silicon (M1/M2/M3/M4) | `SilentRat-macOS-AppleSilicon.zip` |
+            | macOS, Intel | `SilentRat-macOS-Intel.zip` |
+
+            **Windows:** unzip and double-click `SilentRat.exe`. If SmartScreen warns you,
+            click **More info → Run anyway**.
+
+            **macOS:** unzip and move `SilentRat.app` to **Applications**. The app isn't
+            signed by Apple, so the first time you open it, **right-click → Open → Open**.
+            If macOS still says the app is damaged, run:
+            `xattr -dr com.apple.quarantine /Applications/SilentRat.app`
+
+            JS rendering and Web Vitals require Google Chrome (or Microsoft Edge).
+
+            ## Run from Python (any OS)
+
+            ```
+            git clone https://github.com/${{ github.repository }}.git
+            cd silentrat-seo-spider
+            python3 -m venv .venv
+            source .venv/bin/activate        # Windows: .venv\Scripts\activate
+            pip install -r requirements.txt
+            python silentrat.py
+            ```
