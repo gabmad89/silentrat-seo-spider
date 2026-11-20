@@ -36,6 +36,27 @@ xattr -dr com.apple.quarantine /Applications/SilentRat.app
 > **JS rendering and Web Vitals** require **Google Chrome** (or Microsoft Edge) to be
 > installed. They run in headless mode.
 
+## Use it from Claude (skill)
+
+SilentRat also ships as a **Claude skill**: ask Claude to audit a site and it crawls it
+with the same engine, ranks the issues (critical / warnings / improvements), explains
+how to fix the top ones, and hands you an interactive HTML dashboard, an Excel file and
+a `sitemap.xml`.
+
+1. Download `silentrat-seo-audit.zip` from the [**Releases**](../../releases/latest) page.
+2. In Claude's settings, open the **Skills** section and upload the zip.
+3. In the same settings, allow Claude's network access for **all domains** so it can reach the site you want to crawl.
+4. Ask: *"Audit the SEO of https://example.com"*. Claude can also analyze a `crawl.csv`
+   exported from the desktop app.
+
+The skill lives in [`skills/silentrat-seo-audit`](skills/silentrat-seo-audit).
+
+### Report viewer
+
+[`viewer/index.html`](viewer/index.html) is a single-file dashboard: open it in any
+browser, drop in a SilentRat CSV and browse the health score, prioritized issues and a
+filterable URL table. The file is processed locally and never uploaded.
+
 ## 2. Run from Python (Windows, macOS, Linux)
 
 Requires **Python 3.9+** with Tkinter (included in the python.org installers).
@@ -154,6 +175,9 @@ seo-spider/
 ├── silentrat.ico        ← icon
 ├── SilentRat.bat        ← launcher for the Python version
 ├── SilentRat.spec       ← PyInstaller build spec (Windows)
+├── skills/
+│   └── silentrat-seo-audit/  ← Claude skill (SKILL.md, audit.py, report template)
+├── viewer/index.html    ← standalone report viewer
 ├── .github/workflows/
 │   └── release.yml      ← builds Windows + macOS apps and publishes Releases
 ├── requirements.txt
